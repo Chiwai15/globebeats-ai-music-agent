@@ -3,6 +3,7 @@ import GlobeMap from './components/GlobeMap'
 import Header from './components/Header'
 import ChatPanel from './components/ChatPanel'
 import MusicPlayer from './components/MusicPlayer'
+import { API_BASE_URL } from './config'
 import './App.css'
 
 function App() {
@@ -56,7 +57,7 @@ function App() {
     fetchCountries()
 
     // Connect to SSE for real-time updates
-    const eventSource = new EventSource('http://localhost:8001/stream')
+    const eventSource = new EventSource(`${API_BASE_URL}/stream`)
 
     eventSource.onopen = () => {
       setIsConnected(true)
@@ -101,7 +102,7 @@ function App() {
 
   const fetchCountries = async () => {
     try {
-      const response = await fetch('http://localhost:8001/countries')
+      const response = await fetch(`${API_BASE_URL}/countries`)
       if (response.ok) {
         const data = await response.json()
         setCountries(data)
@@ -397,8 +398,22 @@ function App() {
   }
 
   const handleSelectPlaylist = (playlist) => {
-    console.log('Selecting playlist:', playlist.name)
+    console.log('Selecting playlist:', playlist ? playlist.name : 'null')
     setSelectedPlaylist(playlist)
+
+    // Stop current audio when switching to/from a playlist
+    if (currentAudio) {
+      console.log('Stopping current audio when selecting playlist')
+      currentAudio.pause()
+      currentAudio.src = ''
+      setCurrentAudio(null)
+      setCurrentTrack(null)
+      setCurrentPlayingPlaylist(null)
+      setCurrentPlaylistIndex(0)
+      currentPlayingPlaylistRef.current = null
+      currentPlaylistIndexRef.current = 0
+    }
+
     // Clear any selected country when viewing a playlist
     if (globeMapRef.current) {
       // Don't call selectCountry, just let the playlist panel show

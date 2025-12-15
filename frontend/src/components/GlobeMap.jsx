@@ -190,7 +190,9 @@ const GlobeMap = forwardRef(({ countries, playlists, selectedPlaylist, trackFilt
   const handleCountrySelect = (country) => {
     setSelectedCountry(country)
     setIsInteracting(true)
+
     // Clear playlist selection when selecting a country
+    // This will also stop any playlist audio via handleSelectPlaylist in App.jsx
     if (onSelectPlaylist) {
       onSelectPlaylist(null)
     }

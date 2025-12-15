@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react'
+import { API_BASE_URL } from '../config'
 import demoScenariosData from '../data/demoScenarios.json'
 
 const ChatPanel = ({ countries, onSelectCountry, onPlaySong, onSearchAndPlay, onAddPlaylist, currentTrack, playlists, onClearAll }) => {
@@ -118,7 +119,7 @@ const ChatPanel = ({ countries, onSelectCountry, onPlaySong, onSearchAndPlay, on
   const searchAndPlaySpotify = async (query) => {
     console.log('[ChatPanel] Searching Spotify for:', query)
     try {
-      const response = await fetch('http://localhost:8001/search', {
+      const response = await fetch(`${API_BASE_URL}/search`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -178,7 +179,7 @@ Try asking for a different song, or check out what's trending in the countries o
     }])
 
     try {
-      const response = await fetch('http://localhost:8001/search', {
+      const response = await fetch(`${API_BASE_URL}/search`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -280,7 +281,7 @@ Try asking for a different song, or check out what's trending in the countries o
   }
 
   useEffect(() => {
-    fetch('http://localhost:8001/')
+    fetch(`${API_BASE_URL}/`)
       .then(res => res.json())
       .then(data => {
         setAiEnabled(data.ai_enabled || false)
@@ -362,7 +363,7 @@ Try asking for a different song, or check out what's trending in the countries o
             content: msg.content
           }))
 
-        const response = await fetch('http://localhost:8001/chat', {
+        const response = await fetch(`${API_BASE_URL}/chat`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
