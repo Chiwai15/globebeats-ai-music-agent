@@ -1,0 +1,56 @@
+{
+  "scenarios": [
+    {
+      "id": "playlist_creation",
+      "name": "Demo: Create Multiple Playlists",
+      "description": "Shows how to create playlists for different artists",
+      "messages": [
+        "play some taylor swift",
+        "play some linkin park",
+        "play some jazz"
+      ]
+    },
+    {
+      "id": "country_exploration",
+      "name": "Demo: Explore Country Trends",
+      "description": "Discover trending music across different countries",
+      "messages": [
+        "what's trending in japan",
+        "show me trending music in brazil",
+        "what's popular in south korea"
+      ]
+    },
+    {
+      "id": "genre_discovery",
+      "name": "Demo: Genre Discovery",
+      "description": "Create playlists for different music genres",
+      "messages": [
+        "play some rock music",
+        "play some electronic dance music",
+        "play some classical music"
+      ]
+    },
+    {
+      "id": "mood_playlists",
+      "name": "Demo: Mood-based Playlists",
+      "description": "Create playlists based on different moods",
+      "messages": [
+        "play some happy upbeat songs",
+        "play some relaxing chill music",
+        "play some workout motivation music"
+      ]
+    },
+    {
+      "id": "full_demo",
+      "name": "Demo: Complete Features",
+      "description": "Comprehensive demo showing all capabilities",
+      "messages": [
+        "what's trending in the US",
+        "play some shakira",
+        "what's trending in france",
+        "play some rap music",
+        "show me trending music in japan"
+      ]
+    }
+  ]
+}

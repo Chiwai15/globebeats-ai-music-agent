@@ -1,0 +1,496 @@
+{
+  "project": "GlobeBeats",
+  "version": "1.0.0",
+  "last_verified": "2025-12-15",
+  "frontend_features": {
+    "interactive_globe": {
+      "name": "Interactive 3D Globe with Country Visualization",
+      "status": "complete",
+      "file": "frontend/src/components/GlobeMap.jsx",
+      "lines": "1-854",
+      "technologies": ["react-globe.gl", "NASA Earth textures"],
+      "capabilities": [
+        "3D Earth with auto-rotation",
+        "Rainbow-colored country markers with pulsing rings",
+        "Click to zoom and view country tracks",
+        "Zoom controls (in/out/reset)",
+        "Mobile responsive with hamburger menu",
+        "Search countries by name",
+        "Toggle between countries and playlists view"
+      ]
+    },
+    "country_sidebar": {
+      "name": "Country List Sidebar",
+      "status": "complete",
+      "file": "frontend/src/components/GlobeMap.jsx",
+      "lines": "617-695",
+      "capabilities": [
+        "Alphabetically sorted country list",
+        "Track count badges",
+        "Search filter",
+        "Click to select and zoom",
+        "Visual highlight for selected country",
+        "Toggle panel visibility"
+      ]
+    },
+    "playlist_sidebar": {
+      "name": "AI-Created Playlists Sidebar",
+      "status": "complete",
+      "file": "frontend/src/components/GlobeMap.jsx",
+      "lines": "696-775",
+      "capabilities": [
+        "Purple-themed playlist section",
+        "List all created playlists",
+        "Track count per playlist",
+        "Delete button (hover to show)",
+        "Click to view playlist tracks",
+        "Search playlists by name",
+        "Persistent across session"
+      ]
+    },
+    "track_list_panel": {
+      "name": "Track List Display",
+      "status": "complete",
+      "file": "frontend/src/components/TrackList.jsx",
+      "lines": "1-202",
+      "capabilities": [
+        "Display trending tracks or playlist tracks",
+        "Album art thumbnails",
+        "Track name and artist",
+        "Play button overlay on hover",
+        "Visual indicator for currently playing",
+        "Search tracks locally",
+        "Open in iTunes Store link",
+        "Source indicator (iTunes/Playlist)",
+        "Track count display"
+      ]
+    },
+    "music_player": {
+      "name": "Music Player with Controls",
+      "status": "complete",
+      "file": "frontend/src/components/MusicPlayer.jsx",
+      "lines": "1-268",
+      "capabilities": [
+        "Play/pause button",
+        "Skip forward/backward 10 seconds",
+        "Progress bar with seek capability",
+        "Album art display",
+        "Track name and artist with auto-scroll for long text",
+        "Time display (current/total)",
+        "Bottom-centered floating design",
+        "Responsive sizing"
+      ]
+    },
+    "frequency_visualizer": {
+      "name": "Audio Frequency Visualizer",
+      "status": "disabled",
+      "file": "frontend/src/components/FrequencyVisualizer.jsx",
+      "lines": "1-114",
+      "reason": "CORS restrictions on iTunes audio prevent AudioContext access",
+      "note": "Code intact but disabled in useEffect"
+    },
+    "ai_chat_panel": {
+      "name": "AI Chat with Demo Mode",
+      "status": "complete",
+      "file": "frontend/src/components/ChatPanel.jsx",
+      "lines": "1-859",
+      "capabilities": [
+        "Natural language music queries",
+        "Streaming AI responses with typing indicator",
+        "Action execution (zoom, search, play)",
+        "Demo scenario selector with 5 preset demos",
+        "Demo playback with progress indicator",
+        "Conversation history display",
+        "Example questions clickable",
+        "LLM provider indicator",
+        "Thinking/processing events display",
+        "Auto-close on backdrop click",
+        "Floating chat button",
+        "Session-wide action deduplication"
+      ],
+      "action_types": [
+        "PLAY_SONG - Play track from country",
+        "SELECT_COUNTRY - Zoom to country",
+        "SEARCH_AND_PLAY - Search charts",
+        "SHOW_SONG_LIST - Create custom playlist"
+      ],
+      "demo_scenarios": [
+        "Create Multiple Playlists",
+        "Explore Country Trends",
+        "Genre Discovery",
+        "Mood-based Playlists",
+        "Complete Features Demo"
+      ]
+    },
+    "header": {
+      "name": "Application Header",
+      "status": "complete",
+      "file": "frontend/src/components/Header.jsx",
+      "lines": "1-40",
+      "capabilities": [
+        "App branding with globe emoji",
+        "Live connection status indicator",
+        "Demo warning message",
+        "Country count display"
+      ]
+    },
+    "app_orchestration": {
+      "name": "Global State & Playlist Management",
+      "status": "complete",
+      "file": "frontend/src/App.jsx",
+      "lines": "1-466",
+      "capabilities": [
+        "SSE connection for real-time updates",
+        "Global audio state management",
+        "Playlist CRUD operations",
+        "Auto-play mode (trending songs)",
+        "Sequential playlist playback",
+        "Audio unlock on first user interaction",
+        "Auto-play disabled on manual play",
+        "Track filtering and search coordination",
+        "Clear all playlists for demo mode"
+      ]
+    }
+  },
+  "backend_features": {
+    "country_data_api": {
+      "name": "Country Music Data API",
+      "status": "complete",
+      "endpoint": "GET /countries",
+      "file": "backend/main.py",
+      "lines": "175-178",
+      "capabilities": [
+        "Returns all 40+ countries with trending tracks",
+        "Includes album art, preview URLs, track metadata",
+        "In-memory cached with 5-min TTL",
+        "Real-time updates via periodic background task"
+      ]
+    },
+    "single_country_api": {
+      "name": "Single Country Data",
+      "status": "complete",
+      "endpoint": "GET /countries/{country_code}",
+      "file": "backend/main.py",
+      "lines": "181-187",
+      "capabilities": [
+        "Fetch specific country by ISO code",
+        "Same data structure as /countries"
+      ]
+    },
+    "itunes_search_api": {
+      "name": "iTunes Track Search",
+      "status": "complete",
+      "endpoint": "POST /search",
+      "file": "backend/main.py",
+      "lines": "190-205",
+      "capabilities": [
+        "Search by song name, artist, or both",
+        "Returns up to 20 tracks",
+        "90%+ preview URL availability",
+        "Used for custom playlist creation"
+      ]
+    },
+    "sse_stream": {
+      "name": "Server-Sent Events Stream",
+      "status": "complete",
+      "endpoint": "GET /stream",
+      "file": "backend/main.py",
+      "lines": "208-223",
+      "capabilities": [
+        "Real-time country data updates every 30 seconds",
+        "Persistent connection for live updates",
+        "JSON-formatted event data"
+      ]
+    },
+    "ai_chat_api": {
+      "name": "AI Chat with RAG",
+      "status": "complete",
+      "endpoint": "POST /chat",
+      "file": "backend/main.py",
+      "lines": "226-333",
+      "capabilities": [
+        "Streaming SSE responses",
+        "RAG context retrieval (top 10 countries)",
+        "Dual LLM support (OpenAI + Anthropic)",
+        "Automatic fallback on overload",
+        "Playlist state awareness",
+        "Action tag generation",
+        "Conversation history support",
+        "Thinking events during processing"
+      ]
+    },
+    "rag_stats_api": {
+      "name": "RAG Database Statistics",
+      "status": "complete",
+      "endpoint": "GET /rag/stats",
+      "file": "backend/main.py",
+      "lines": "336-339",
+      "capabilities": [
+        "Vector database document count",
+        "Last update timestamp"
+      ]
+    },
+    "rag_summary_api": {
+      "name": "RAG Country Summary",
+      "status": "complete",
+      "endpoint": "GET /rag/summary",
+      "file": "backend/main.py",
+      "lines": "342-345",
+      "capabilities": [
+        "Text summary of all available countries"
+      ]
+    },
+    "health_check": {
+      "name": "Health Check Endpoint",
+      "status": "complete",
+      "endpoint": "GET /",
+      "file": "backend/main.py",
+      "lines": "148-172",
+      "capabilities": [
+        "Service status",
+        "Country count",
+        "Music source indicator",
+        "Search availability",
+        "AI/LLM availability",
+        "Available LLM providers",
+        "RAG statistics"
+      ]
+    },
+    "itunes_service": {
+      "name": "iTunes Integration Service",
+      "status": "complete",
+      "file": "backend/services/itunes_service.py",
+      "lines": "1-142",
+      "capabilities": [
+        "Fetch top 10 trending tracks per country (RSS Feed)",
+        "Search iTunes catalog",
+        "Get preview URLs (30-second clips)",
+        "90%+ preview availability on search",
+        "Top 5 preview URLs for trending to limit API calls"
+      ],
+      "apis_used": [
+        "https://itunes.apple.com/{country}/rss/topsongs/limit=10/json",
+        "https://itunes.apple.com/search"
+      ]
+    },
+    "llm_service": {
+      "name": "LLM Chat Service",
+      "status": "complete",
+      "file": "backend/services/llm_service.py",
+      "lines": "1-196",
+      "capabilities": [
+        "OpenAI GPT-4 streaming",
+        "Anthropic Claude Sonnet 4.5 streaming",
+        "RAG context injection",
+        "Playlist state awareness",
+        "Action tag generation",
+        "Few-shot prompting for consistency",
+        "Temperature: 0.7, Max tokens: 1000"
+      ],
+      "action_types": [
+        "SELECT_COUNTRY",
+        "SHOW_SONG_LIST",
+        "SEARCH_AND_PLAY"
+      ]
+    },
+    "rag_service": {
+      "name": "RAG Vector Database Service",
+      "status": "complete",
+      "file": "backend/services/rag_service.py",
+      "lines": "1-111",
+      "capabilities": [
+        "ChromaDB in-memory vector database",
+        "SentenceTransformers embeddings (all-MiniLM-L6-v2, 384-dim)",
+        "Semantic search over country music data",
+        "Top-10 results (HNSW limitation)",
+        "Automatic updates on data refresh",
+        "Country-level document granularity"
+      ]
+    },
+    "spotify_service": {
+      "name": "Spotify Web API Service",
+      "status": "legacy",
+      "file": "backend/services/spotify_service.py",
+      "lines": "1-144",
+      "note": "Code exists but not actively used. iTunes is primary source.",
+      "capabilities": [
+        "OAuth2 authentication",
+        "Track search",
+        "Market-based popular tracks"
+      ]
+    },
+    "lastfm_service": {
+      "name": "Last.fm API Service",
+      "status": "legacy",
+      "file": "backend/services/lastfm_service.py",
+      "lines": "1-40",
+      "note": "Code exists but not actively used. No preview URLs available.",
+      "capabilities": [
+        "Country top tracks",
+        "No audio preview support"
+      ]
+    },
+    "periodic_updates": {
+      "name": "Background Data Updates",
+      "status": "complete",
+      "file": "backend/main.py",
+      "lines": "103-145",
+      "capabilities": [
+        "Update every 5 minutes (configurable)",
+        "Batch processing (5 countries at a time)",
+        "Concurrent fetching with asyncio",
+        "Automatic RAG database refresh",
+        "Error handling per country"
+      ]
+    },
+    "configuration": {
+      "name": "Environment Configuration",
+      "status": "complete",
+      "file": "backend/config.py",
+      "lines": "1-29",
+      "capabilities": [
+        "Pydantic-based settings",
+        ".env file loading",
+        "CORS origins configuration",
+        "LLM provider selection",
+        "API key management",
+        "Update interval configuration"
+      ]
+    }
+  },
+  "technical_stack": {
+    "frontend": {
+      "framework": "React 18",
+      "build_tool": "Vite",
+      "styling": "Tailwind CSS",
+      "3d_visualization": "react-globe.gl",
+      "real_time": "Server-Sent Events (EventSource API)",
+      "state_management": "React Hooks (useState, useRef, useEffect)"
+    },
+    "backend": {
+      "framework": "FastAPI",
+      "server": "Uvicorn (ASGI)",
+      "validation": "Pydantic",
+      "http_client": "httpx (async)",
+      "vector_db": "ChromaDB (in-memory)",
+      "embeddings": "SentenceTransformers (all-MiniLM-L6-v2)",
+      "llm_providers": ["OpenAI", "Anthropic"],
+      "streaming": "SSE-Starlette"
+    },
+    "external_apis": {
+      "music_data": [
+        "iTunes RSS Feed API (primary, trending charts)",
+        "iTunes Search API (search & previews)"
+      ],
+      "ai_llm": [
+        "OpenAI GPT-4 Turbo",
+        "Anthropic Claude Sonnet 4.5"
+      ],
+      "legacy_unused": [
+        "Spotify Web API",
+        "Last.fm API"
+      ]
+    }
+  },
+  "key_patterns": {
+    "action_tag_system": {
+      "description": "Custom protocol for LLM-to-frontend communication",
+      "format": "[ACTION:TYPE|params]",
+      "examples": [
+        "[ACTION:SELECT_COUNTRY|JP]",
+        "[ACTION:SHOW_SONG_LIST|Taylor Swift]",
+        "[ACTION:SEARCH_AND_PLAY|rock music]"
+      ],
+      "implementation": "Parsed in ChatPanel.jsx executeAction()"
+    },
+    "llm_fallback": {
+      "description": "Automatic provider switching on overload/rate limit",
+      "primary": "Configurable (openai/anthropic)",
+      "fallback": "Alternate provider if enabled",
+      "conditions": ["overloaded", "rate_limit"]
+    },
+    "auto_play_management": {
+      "description": "Intelligent auto-play that respects user interaction",
+      "modes": [
+        "Auto-play mode: Random trending songs",
+        "Playlist mode: Sequential playback",
+        "Manual mode: Auto-play permanently disabled after any manual play"
+      ]
+    },
+    "audio_unlock": {
+      "description": "Browser autoplay policy compliance",
+      "implementation": "Silent audio on first click/keypress unlocks AudioContext"
+    },
+    "responsive_design": {
+      "mobile": "Hamburger menu, bottom sheets, tabs",
+      "desktop": "Sidebars, always-visible panels",
+      "breakpoint": "768px"
+    }
+  },
+  "data_flows": {
+    "music_data": [
+      "iTunes RSS Feed API → Backend fetch (batched)",
+      "Store in music_cache (in-memory, 5-min TTL)",
+      "Update RAG vector database (embed & index)",
+      "SSE broadcast to frontend every 30 seconds",
+      "Display on 3D globe with markers"
+    ],
+    "playlist_creation": [
+      "User: 'play taylor swift'",
+      "Backend: RAG search → top 10 countries",
+      "LLM: Generate [ACTION:SHOW_SONG_LIST|Taylor Swift]",
+      "Frontend: Parse action tag",
+      "POST /search → iTunes Search API",
+      "Create playlist in App.jsx state",
+      "Display in sidebar, auto-play first track"
+    ],
+    "track_playback": [
+      "User clicks track OR LLM action triggers",
+      "App.jsx creates Audio(preview_url)",
+      "MusicPlayer displays controls",
+      "On end: Check playlist continuation",
+      "Playlist mode: Play next track",
+      "Auto-play mode: Random trending track"
+    ]
+  },
+  "deployment": {
+    "development": {
+      "backend": "uvicorn --reload --port 8000",
+      "frontend": "vite --port 5173",
+      "docker": "docker-compose up"
+    },
+    "ports": {
+      "backend_internal": 8000,
+      "backend_exposed": 8001,
+      "frontend_internal": 5173,
+      "frontend_exposed": 5174
+    },
+    "environment_required": [
+      "OPENAI_API_KEY or ANTHROPIC_API_KEY (required for AI)",
+      "LLM_PROVIDER (openai/anthropic)"
+    ],
+    "environment_optional": [
+      "SPOTIFY_CLIENT_ID (unused)",
+      "SPOTIFY_CLIENT_SECRET (unused)",
+      "LASTFM_API_KEY (unused)",
+      "UPDATE_INTERVAL (default: 300)",
+      "CORS_ORIGINS (default: localhost:5173,5174)"
+    ]
+  },
+  "known_limitations": [
+    "ChromaDB HNSW index limited to 10 results per query",
+    "iTunes preview URLs CORS-restricted (visualizer disabled)",
+    "Single-instance architecture (no horizontal scaling)",
+    "No data persistence (in-memory only)",
+    "No user authentication or rate limiting",
+    "Demo mode only (no production user management)"
+  ],
+  "code_statistics": {
+    "frontend_total_lines": 2657,
+    "backend_total_lines": 1238,
+    "largest_component": "GlobeMap.jsx (854 lines)",
+    "most_complex_service": "ChatPanel.jsx (859 lines with demo mode)",
+    "api_endpoints": 8,
+    "service_classes": 5
+  }
+}

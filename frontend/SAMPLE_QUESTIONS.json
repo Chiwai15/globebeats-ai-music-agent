@@ -1,0 +1,436 @@
+{
+  "sample_questions": {
+    "description": "Comprehensive examples of interactive questions you can ask the GlobeBeats AI",
+    "categories": {
+      "country_selection": {
+        "description": "Questions that select and zoom to a specific country",
+        "action": "SELECT_COUNTRY",
+        "examples": [
+          {
+            "question": "Show me Japan's music chart",
+            "expected_action": "[ACTION:SELECT_COUNTRY|JP]",
+            "result": "Zooms to Japan, opens track list panel"
+          },
+          {
+            "question": "What's trending in Brazil?",
+            "expected_action": "[ACTION:SELECT_COUNTRY|BR]",
+            "result": "Zooms to Brazil, displays current chart"
+          },
+          {
+            "question": "Take me to South Korea",
+            "expected_action": "[ACTION:SELECT_COUNTRY|KR]",
+            "result": "Selects South Korea on globe"
+          }
+        ]
+      },
+      "play_specific_song": {
+        "description": "Play a specific song from a specific country",
+        "action": "PLAY_SONG",
+        "examples": [
+          {
+            "question": "Play the 5th song from Japan",
+            "expected_action": "[ACTION:PLAY_SONG|JP|Zoo|Shakira]",
+            "result": "Plays the 5th ranked song, shows in playbar, highlights in track list"
+          },
+          {
+            "question": "Play the top song from United States",
+            "expected_action": "[ACTION:PLAY_SONG|US|track_name|artist_name]",
+            "result": "Plays #1 song from US chart"
+          },
+          {
+            "question": "Play Die With A Smile from the US chart",
+            "expected_action": "[ACTION:PLAY_SONG|US|Die With A Smile|Lady Gaga]",
+            "result": "Plays specific song if available"
+          }
+        ]
+      },
+      "search_and_play": {
+        "description": "Search across all countries for a song or artist and auto-play",
+        "action": "SEARCH_AND_PLAY",
+        "examples": [
+          {
+            "question": "Play Taylor Swift",
+            "expected_action": "[ACTION:SEARCH_AND_PLAY|taylor swift]",
+            "result": "Finds first country with Taylor Swift, filters track list, plays first match, zooms to country"
+          },
+          {
+            "question": "Which countries are listening to Christmas songs?",
+            "expected_action": "[ACTION:SEARCH_AND_PLAY|christmas]",
+            "result": "Finds and plays first Christmas song, shows which country"
+          },
+          {
+            "question": "Play some Taylor Swift",
+            "expected_action": "[ACTION:SEARCH_AND_PLAY|shakira]",
+            "result": "Searches globally for Shakira, plays first result"
+          },
+          {
+            "question": "Who's listening to K-pop?",
+            "expected_action": "[ACTION:SEARCH_AND_PLAY|k-pop]",
+            "result": "Finds K-pop tracks across countries"
+          }
+        ]
+      },
+      "comparison_queries": {
+        "description": "Compare music trends across multiple countries",
+        "action": "None (informational response)",
+        "examples": [
+          {
+            "question": "Compare US and UK music trends",
+            "expected_action": "No action marker, just analysis",
+            "result": "AI analyzes and compares the two charts"
+          },
+          {
+            "question": "What's similar between Japan and South Korea charts?",
+            "expected_action": "No action marker",
+            "result": "Lists common artists, genres, trends"
+          },
+          {
+            "question": "How does Brazil's chart differ from Argentina?",
+            "expected_action": "No action marker",
+            "result": "Comparison analysis"
+          }
+        ]
+      },
+      "discovery_queries": {
+        "description": "Find patterns, popular artists, or trends globally",
+        "action": "None (informational response)",
+        "examples": [
+          {
+            "question": "Which artist appears in the most countries?",
+            "expected_action": "No action marker",
+            "result": "AI counts and reports most popular global artist"
+          },
+          {
+            "question": "What genres are trending in Europe?",
+            "expected_action": "No action marker",
+            "result": "Analysis of European country charts"
+          },
+          {
+            "question": "Top artists in Asia",
+            "expected_action": "No action marker",
+            "result": "Lists popular artists across Asian countries"
+          },
+          {
+            "question": "Which countries have similar music taste?",
+            "expected_action": "No action marker",
+            "result": "Groups countries by similarity"
+          }
+        ]
+      },
+      "specific_ranking_queries": {
+        "description": "Ask about specific chart positions",
+        "action": "PLAY_SONG or SELECT_COUNTRY",
+        "examples": [
+          {
+            "question": "What's #1 in Canada right now?",
+            "expected_action": "[ACTION:SELECT_COUNTRY|CA] + song info",
+            "result": "Shows Canada's chart, highlights #1 song"
+          },
+          {
+            "question": "Play the 3rd song from France",
+            "expected_action": "[ACTION:PLAY_SONG|FR|track_name|artist_name]",
+            "result": "Plays 3rd ranked song from France"
+          },
+          {
+            "question": "Show me Germany's top 5",
+            "expected_action": "[ACTION:SELECT_COUNTRY|DE]",
+            "result": "Opens Germany's track list"
+          }
+        ]
+      },
+      "playbar_controls": {
+        "description": "Control playback using the player at the bottom",
+        "action": "User clicks UI directly",
+        "examples": [
+          {
+            "question": "User clicks play/pause button",
+            "result": "Toggles playback"
+          },
+          {
+            "question": "User clicks skip forward",
+            "result": "Jumps 10 seconds ahead"
+          },
+          {
+            "question": "User clicks skip backward",
+            "result": "Jumps 10 seconds back"
+          },
+          {
+            "question": "User clicks progress bar",
+            "result": "Seeks to that position in song"
+          }
+        ]
+      },
+      "globe_interactions": {
+        "description": "Direct interaction with the globe visualization",
+        "action": "User clicks UI directly",
+        "examples": [
+          {
+            "question": "User clicks music pin on globe",
+            "result": "Selects country, opens track list, zooms globe"
+          },
+          {
+            "question": "User clicks country from country list",
+            "result": "Selects country, zooms to it"
+          },
+          {
+            "question": "User hovers over music pin",
+            "result": "Pin scales up to 1.3x"
+          },
+          {
+            "question": "User clicks zoom in/out buttons",
+            "result": "Adjusts globe altitude"
+          }
+        ]
+      },
+      "track_list_interactions": {
+        "description": "Interacting with the track list panel",
+        "action": "User clicks UI directly",
+        "examples": [
+          {
+            "question": "User clicks a track in the list",
+            "result": "Plays that track, shows in playbar, highlights track"
+          },
+          {
+            "question": "User clicks iTunes link icon",
+            "result": "Opens song in iTunes/Apple Music"
+          },
+          {
+            "question": "User hovers over track",
+            "result": "Shows play button overlay and iTunes link"
+          }
+        ]
+      },
+      "artist_playlist_queries": {
+        "description": "Get a list of songs from a specific artist",
+        "action": "SHOW_SONG_LIST",
+        "examples": [
+          {
+            "question": "Give me top 10 Taylor Swift songs",
+            "expected_action": "[ACTION:SHOW_SONG_LIST|Taylor Swift]",
+            "result": "Displays custom playlist of Taylor Swift songs from Spotify"
+          },
+          {
+            "question": "Show me Ed Sheeran's best tracks",
+            "expected_action": "[ACTION:SHOW_SONG_LIST|Ed Sheeran]",
+            "result": "Creates Ed Sheeran playlist"
+          },
+          {
+            "question": "List Beyonce songs",
+            "expected_action": "[ACTION:SHOW_SONG_LIST|Beyonce]",
+            "result": "Shows Beyonce's discography"
+          },
+          {
+            "question": "Give me some Drake hits",
+            "expected_action": "[ACTION:SHOW_SONG_LIST|Drake]",
+            "result": "Curated Drake playlist"
+          }
+        ]
+      },
+      "mood_genre_situation_queries": {
+        "description": "Get songs based on mood, genre, or life situation",
+        "action": "SHOW_SONG_LIST",
+        "examples": [
+          {
+            "question": "I just broke up with my girlfriend, give me a song list",
+            "expected_action": "[ACTION:SHOW_SONG_LIST|breakup sad heartbreak songs]",
+            "result": "Thoughtfully curated breakup playlist"
+          },
+          {
+            "question": "Give me rap songs top 10",
+            "expected_action": "[ACTION:SHOW_SONG_LIST|top rap hip hop songs]",
+            "result": "Top rap/hip-hop playlist"
+          },
+          {
+            "question": "Workout music playlist",
+            "expected_action": "[ACTION:SHOW_SONG_LIST|workout gym energy songs]",
+            "result": "High-energy workout songs"
+          },
+          {
+            "question": "Songs for a party",
+            "expected_action": "[ACTION:SHOW_SONG_LIST|party dance upbeat songs]",
+            "result": "Party playlist"
+          },
+          {
+            "question": "Chill vibes for studying",
+            "expected_action": "[ACTION:SHOW_SONG_LIST|chill study relaxing songs]",
+            "result": "Calm study music"
+          },
+          {
+            "question": "Sad songs to cry to",
+            "expected_action": "[ACTION:SHOW_SONG_LIST|sad emotional crying songs]",
+            "result": "Emotional/sad playlist"
+          },
+          {
+            "question": "Best rock songs",
+            "expected_action": "[ACTION:SHOW_SONG_LIST|best rock songs]",
+            "result": "Rock music playlist"
+          },
+          {
+            "question": "Country music playlist",
+            "expected_action": "[ACTION:SHOW_SONG_LIST|country music songs]",
+            "result": "Country genre playlist"
+          }
+        ]
+      },
+      "api_features": {
+        "description": "Backend API capabilities and MCP tools",
+        "endpoints": [
+          {
+            "endpoint": "GET /countries",
+            "description": "Fetches all 40 countries with their current charts",
+            "response": "Array of country objects with tracks"
+          },
+          {
+            "endpoint": "GET /stream",
+            "description": "Server-Sent Events stream for real-time chart updates",
+            "response": "SSE stream with 'update' events"
+          },
+          {
+            "endpoint": "POST /chat",
+            "description": "AI chat endpoint with RAG context",
+            "body": {
+              "message": "User question",
+              "conversation_history": "Last 5 messages"
+            },
+            "response": "Streaming SSE response with action markers"
+          },
+          {
+            "endpoint": "GET /",
+            "description": "Health check and AI status",
+            "response": {
+              "message": "GlobeBeats API",
+              "ai_enabled": true
+            }
+          }
+        ],
+        "rag_system": {
+          "description": "Retrieval-Augmented Generation using ChromaDB",
+          "vector_db": "ChromaDB with all-MiniLM-L6-v2 embeddings",
+          "context": "All 40 countries' current chart data",
+          "retrieval": "Top 5 most relevant country contexts per query"
+        },
+        "mcp_tools": {
+          "description": "No MCP tools currently implemented - could add:",
+          "potential_tools": [
+            "get_country_chart(country_code) - Fetch specific country chart",
+            "search_tracks(query) - Search across all countries",
+            "play_song(country_code, track_name) - Trigger playback",
+            "get_trending_artists() - Get global trending artists",
+            "compare_countries(country1, country2) - Compare two charts"
+          ]
+        }
+      }
+    },
+    "action_system": {
+      "description": "How the AI triggers frontend actions",
+      "format": "[ACTION:TYPE|param1|param2|...]",
+      "types": {
+        "PLAY_SONG": {
+          "format": "[ACTION:PLAY_SONG|country_code|track_name|artist_name]",
+          "example": "[ACTION:PLAY_SONG|JP|Zoo|Shakira]",
+          "behavior": "Plays specific song from country chart, updates playbar, highlights in track list"
+        },
+        "SELECT_COUNTRY": {
+          "format": "[ACTION:SELECT_COUNTRY|country_code]",
+          "example": "[ACTION:SELECT_COUNTRY|BR]",
+          "behavior": "Zooms globe to country, opens track list panel"
+        },
+        "SEARCH_AND_PLAY": {
+          "format": "[ACTION:SEARCH_AND_PLAY|search_query]",
+          "example": "[ACTION:SEARCH_AND_PLAY|taylor swift]",
+          "behavior": "Searches across trending charts, filters track list, plays first match, zooms to country"
+        },
+        "SEARCH_SPOTIFY": {
+          "format": "[ACTION:SEARCH_SPOTIFY|song_name artist_name]",
+          "example": "[ACTION:SEARCH_SPOTIFY|Love Story Taylor Swift]",
+          "behavior": "Searches Spotify's full catalog, plays first song with preview (if available)"
+        },
+        "SHOW_SONG_LIST": {
+          "format": "[ACTION:SHOW_SONG_LIST|search_query]",
+          "example": "[ACTION:SHOW_SONG_LIST|Taylor Swift]",
+          "behavior": "Searches Spotify, displays custom playlist/song list, allows browsing and playing individual tracks",
+          "use_cases": [
+            "Artist playlists (e.g., 'top 10 from Taylor Swift')",
+            "Genre playlists (e.g., 'rap top 10', 'rock songs')",
+            "Mood playlists (e.g., 'sad songs', 'party music')",
+            "Situation playlists (e.g., 'breakup songs', 'workout music')"
+          ]
+        }
+      },
+      "parsing": {
+        "location": "frontend/src/components/ChatPanel.jsx",
+        "regex": "/\\[ACTION:\\w+\\|[^\\]]+\\]/g",
+        "execution": "Actions are stripped from display, executed via executeAction()"
+      }
+    },
+    "data_sources": {
+      "itunes_api": {
+        "rss_feed": "https://rss.applemarketingtools.com/api/v2/{country}/music/most-played/100/songs.json",
+        "search_api": "https://itunes.apple.com/search?term={query}&media=music&limit=1",
+        "preview_urls": "30-second MP3 previews when available",
+        "update_frequency": "Every 10 minutes"
+      },
+      "countries": [
+        "US", "GB", "DE", "FR", "ES", "IT", "BR", "MX", "CA", "AU",
+        "JP", "KR", "IN", "SE", "NO", "NL", "PL", "AR", "CL", "CO",
+        "TH", "SG", "MY", "PH", "TR", "ZA", "NZ", "FI", "DK", "PT",
+        "GR", "IE", "AT", "CH", "BE", "CZ", "HU", "RO", "ID", "VN"
+      ]
+    },
+    "ui_components": {
+      "globe": {
+        "library": "react-globe.gl",
+        "features": [
+          "3D Earth visualization with topology",
+          "Colored point markers for countries",
+          "HTML overlay music icons (white note in colored circle)",
+          "Pulsing rings around active countries",
+          "Auto-rotation when not interacting",
+          "Zoom and pan controls"
+        ]
+      },
+      "music_player": {
+        "location": "Bottom center, always visible",
+        "style": "White glass morphism (backdrop-blur)",
+        "controls": [
+          "Skip backward 10s",
+          "Play/Pause (blue circle)",
+          "Skip forward 10s",
+          "Progress bar with seek",
+          "Current time / Duration",
+          "Album art and track info"
+        ]
+      },
+      "chat_panel": {
+        "location": "Bottom right toggle button",
+        "style": "Transparent with gradient fades, opaque on hover",
+        "features": [
+          "Streaming AI responses",
+          "Example question chips",
+          "Conversation history (last 5 messages)",
+          "Action execution (hidden from user)"
+        ]
+      },
+      "track_list": {
+        "location": "Right side panel when country selected",
+        "features": [
+          "Scrollable track list",
+          "Album art thumbnails",
+          "Play preview on click",
+          "iTunes external links",
+          "Currently playing highlight",
+          "Filtered view based on search"
+        ]
+      },
+      "country_list": {
+        "location": "Left side panel (toggleable)",
+        "features": [
+          "Alphabetically sorted",
+          "Track count badges",
+          "Auto-scroll to selected country",
+          "Click to select and zoom"
+        ]
+      }
+    }
+  }
+}
