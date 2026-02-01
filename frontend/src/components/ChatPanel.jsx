@@ -655,7 +655,7 @@ Try asking for a different song, or check out what's trending in the countries o
 
       {/* Chat Panel - Bottom Right */}
       {isOpen && (
-        <div className="fixed bottom-[86px] max-[673px]:bottom-[170px] right-6 z-[2000] w-72 max-h-[450px] bg-transparent hover:bg-gray-100 rounded-2xl border-0 hover:border hover:border-gray-200 hover:shadow-lg flex flex-col transition-all duration-300 animate-chat-appear">
+        <div className="fixed bottom-[86px] max-[673px]:bottom-[170px] right-6 z-[2000] w-72 max-h-[450px] bg-white/80 backdrop-blur-md rounded-2xl border border-white/50 shadow-lg flex flex-col transition-all duration-300 animate-chat-appear">
           {/* Header - Always visible for demo */}
           <div className="relative px-2 py-1.5 border-b border-gray-100 bg-gray-50/90 shadow-sm rounded-t-2xl">
             <div className="flex items-center justify-between mb-1.5">
