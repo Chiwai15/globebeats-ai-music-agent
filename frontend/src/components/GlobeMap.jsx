@@ -734,7 +734,7 @@ const GlobeMap = forwardRef(({ countries, playlists, selectedPlaylist, trackFilt
               )}
             </div>
           </div>
-          <div className="overflow-y-auto max-h-[calc(42vh-48px)]">
+          <div className="flex-1 overflow-y-auto">
             {filteredPlaylists.map((playlist, index) => {
               const isSelected = selectedPlaylist?.id === playlist.id
               return (

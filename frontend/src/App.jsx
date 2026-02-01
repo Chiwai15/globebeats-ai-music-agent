@@ -87,13 +87,25 @@ function App() {
     }
   }, [])
 
-  // Auto-play random song on page load (after audio is unlocked)
+  // Auto-play random trending song on page load (after audio is unlocked)
   useEffect(() => {
+    // Playlist mode: playlist handles its own sequential playback via 'ended' event
+    if (currentPlayingPlaylistRef.current) {
+      return
+    }
+
+    // Manual mode: user clicked a track, no auto-play
+    if (!isAutoPlayModeRef.current) {
+      return
+    }
+
     if (countries.length > 0 && !currentTrack && audioUnlockedRef.current) {
-      // Wait a bit for everything to load
       const timer = setTimeout(() => {
-        console.log('Auto-playing random song...')
-        playRandomSong()
+        // Verify conditions still valid (state may change during timeout)
+        if (!currentPlayingPlaylistRef.current && isAutoPlayModeRef.current) {
+          console.log('Auto-playing random song...')
+          playRandomSong()
+        }
       }, 500)
 
       return () => clearTimeout(timer)

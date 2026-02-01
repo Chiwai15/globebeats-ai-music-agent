@@ -28,7 +28,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "5174:5173"
+      - "5174:80"
     volumes:
       - ./frontend:/app
       - /app/node_modules
