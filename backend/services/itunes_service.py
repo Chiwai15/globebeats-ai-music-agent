@@ -1,4 +1,5 @@
 import httpx
+import asyncio
 from typing import List
 from models import Track
 
@@ -10,21 +11,24 @@ class ITunesService:
 
     async def get_preview_url(self, track_name: str, artist_name: str, country_code: str) -> str:
         """Get preview URL for a track using iTunes Search API"""
-        try:
-            params = {
-                'term': f"{track_name} {artist_name}",
-                'media': 'music',
-                'entity': 'song',
-                'limit': 1,
-                'country': country_code
-            }
+        params = {
+            'term': f"{track_name} {artist_name}",
+            'media': 'music',
+            'entity': 'song',
+            'limit': 1,
+            'country': country_code
+        }
 
+        try:
             async with httpx.AsyncClient() as client:
-                response = await client.get(self.search_base, params=params, timeout=5.0)
+                response = await client.get(self.search_base, params=params, timeout=10.0)
                 if response.status_code == 200:
                     data = response.json()
                     if data.get('results') and len(data['results']) > 0:
                         return data['results'][0].get('previewUrl')
+                elif response.status_code in (403, 429):
+                    # Rate limited - skip silently to avoid log spam
+                    pass
         except:
             pass
         return None
@@ -122,10 +126,12 @@ class ITunesService:
                     elif isinstance(link_data, list) and len(link_data) > 0:
                         external_url = link_data[0].get("attributes", {}).get("href")
 
-                    # Get preview URL for top 5 tracks only (to avoid too many API calls)
+                    # Get preview URL for first 5 tracks (iTunes rate limits from Docker IPs)
+                    # Note: iTunes aggressively rate limits API requests from server IPs
                     preview_url = None
                     if idx < 5:
                         preview_url = await self.get_preview_url(track_name, artist_name, country_code)
+                        await asyncio.sleep(0.2)  # Small delay between requests
 
                     tracks.append(Track(
                         name=track_name,
