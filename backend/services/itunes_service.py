@@ -34,7 +34,7 @@ class ITunesService:
         return None
 
     async def search_tracks(self, query: str, limit: int = 20) -> List[Track]:
-        """Search for tracks using iTunes Search API
+        """Search for tracks using iTunes Search API with retry logic
 
         Args:
             query: Search query (artist name, song name, etc.)
@@ -43,47 +43,58 @@ class ITunesService:
         Returns:
             List of Track objects with preview URLs
         """
-        try:
-            params = {
-                'term': query,
-                'media': 'music',
-                'entity': 'song',
-                'limit': limit,
-                'country': 'US'  # Use US store for widest catalog
-            }
+        params = {
+            'term': query,
+            'media': 'music',
+            'entity': 'song',
+            'limit': limit,
+            'country': 'US'  # Use US store for widest catalog
+        }
 
-            async with httpx.AsyncClient() as client:
-                response = await client.get(self.search_base, params=params, timeout=10.0)
+        # Retry with exponential backoff for rate limiting
+        for attempt in range(3):
+            try:
+                async with httpx.AsyncClient() as client:
+                    response = await client.get(self.search_base, params=params, timeout=15.0)
 
-                if response.status_code != 200:
-                    print(f"iTunes search error: {response.status_code}")
-                    return []
+                    if response.status_code == 200:
+                        data = response.json()
+                        results = data.get('results', [])
 
-                data = response.json()
-                results = data.get('results', [])
+                        tracks = []
+                        for result in results:
+                            track_name = result.get('trackName', 'Unknown')
+                            artist_name = result.get('artistName', 'Unknown Artist')
+                            preview_url = result.get('previewUrl')
+                            image_url = result.get('artworkUrl100')
+                            external_url = result.get('trackViewUrl')
 
-                tracks = []
-                for result in results:
-                    # Extract track information
-                    track_name = result.get('trackName', 'Unknown')
-                    artist_name = result.get('artistName', 'Unknown Artist')
-                    preview_url = result.get('previewUrl')  # iTunes almost always has this!
-                    image_url = result.get('artworkUrl100')  # 100x100 album art
-                    external_url = result.get('trackViewUrl')  # iTunes store link
+                            tracks.append(Track(
+                                name=track_name,
+                                artist=artist_name,
+                                preview_url=preview_url,
+                                image_url=image_url,
+                                external_url=external_url
+                            ))
 
-                    tracks.append(Track(
-                        name=track_name,
-                        artist=artist_name,
-                        preview_url=preview_url,
-                        image_url=image_url,
-                        external_url=external_url
-                    ))
+                        return tracks
 
-                return tracks
+                    elif response.status_code in (403, 429):
+                        # Rate limited - wait and retry
+                        wait_time = (attempt + 1) * 3  # 3s, 6s, 9s
+                        print(f"iTunes search rate limited, waiting {wait_time}s...")
+                        await asyncio.sleep(wait_time)
+                        continue
+                    else:
+                        print(f"iTunes search error: {response.status_code}")
+                        return []
 
-        except Exception as e:
-            print(f"iTunes search error: {type(e).__name__}: {str(e)}")
-            return []
+            except Exception as e:
+                print(f"iTunes search error: {type(e).__name__}: {str(e)}")
+                if attempt < 2:
+                    await asyncio.sleep(2)
+
+        return []
 
     async def get_country_top_tracks(self, country_code: str) -> List[Track]:
         """Get top tracks for a specific country using iTunes RSS Feed API"""

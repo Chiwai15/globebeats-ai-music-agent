@@ -14,7 +14,7 @@ COUNTRIES = [
     {"code": "CA", "name": "Canada", "lat": 56.1304, "lon": -106.3468, "flag": "🇨🇦"},
     {"code": "AU", "name": "Australia", "lat": -25.2744, "lon": 133.7751, "flag": "🇦🇺"},
     {"code": "JP", "name": "Japan", "lat": 36.2048, "lon": 138.2529, "flag": "🇯🇵"},
-    {"code": "KR", "name": "South Korea", "lat": 35.9078, "lon": 127.7669, "flag": "🇰🇷"},
+    {"code": "TW", "name": "Taiwan", "lat": 23.6978, "lon": 120.9605, "flag": "🇹🇼"},
     {"code": "IN", "name": "India", "lat": 20.5937, "lon": 78.9629, "flag": "🇮🇳"},
     {"code": "SE", "name": "Sweden", "lat": 60.1282, "lon": 18.6435, "flag": "🇸🇪"},
     {"code": "NO", "name": "Norway", "lat": 60.4720, "lon": 8.4689, "flag": "🇳🇴"},
