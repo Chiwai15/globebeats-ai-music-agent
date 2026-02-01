@@ -1,10 +1,23 @@
-.PHONY: help start stop restart build logs logs-backend logs-frontend clean status health shell-backend shell-frontend dev-backend dev-frontend test-api
+.PHONY: help run start stop restart build logs logs-backend logs-frontend clean status health shell-backend shell-frontend dev-backend dev-frontend test-api
 
 # Default target
+run: build
+	@echo ""
+	@echo "GlobeBeats is running!"
+	@echo "  Frontend: http://localhost:5174"
+	@echo "  Backend:  http://localhost:8001"
+	@echo "  API Docs: http://localhost:8001/docs"
+	@echo ""
+	@echo "Run 'make logs' to see output"
+	@echo "Run 'make stop' to stop services"
+
 help:
 	@echo "GlobeBeats - Development Commands"
 	@echo ""
 	@echo "Usage: make [target]"
+	@echo ""
+	@echo "Quick Start:"
+	@echo "  run            Build and start everything"
 	@echo ""
 	@echo "Docker Commands:"
 	@echo "  start          Start all services (docker-compose up -d)"
