@@ -103,7 +103,7 @@ The backend CORS configuration needs to allow your frontend URL:
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
     "builder": "DOCKERFILE",
-    "dockerfilePath": "backend/Dockerfile"
+    "dockerfilePath": "Dockerfile"
   },
   "deploy": {
     "restartPolicyType": "ON_FAILURE",
@@ -118,7 +118,7 @@ The backend CORS configuration needs to allow your frontend URL:
   "$schema": "https://railway.app/railway.schema.json",
   "build": {
     "builder": "DOCKERFILE",
-    "dockerfilePath": "frontend/Dockerfile"
+    "dockerfilePath": "Dockerfile"
   },
   "deploy": {
     "restartPolicyType": "ON_FAILURE",
