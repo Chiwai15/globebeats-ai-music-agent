@@ -36,3 +36,7 @@ logs/
 
 # Development artifacts
 llm-history/
+
+# Deployment scripts with secrets
+deploy-railway.sh
+.railway/
