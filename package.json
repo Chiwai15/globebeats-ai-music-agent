@@ -1,0 +1,24 @@
+{
+  "name": "globebeats",
+  "version": "1.0.0",
+  "description": "Real-time global music discovery platform with RAG-powered natural language querying. Explore what's trending across 40+ countries and interact with music data through conversational AI.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Chiwai15/globebeats-ai-music-agent.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Chiwai15/globebeats-ai-music-agent/issues"
+  },
+  "homepage": "https://github.com/Chiwai15/globebeats-ai-music-agent#readme"
+}

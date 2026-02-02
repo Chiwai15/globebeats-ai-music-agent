@@ -1,62 +1,224 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import GlobeMap from './components/GlobeMap'
 import Header from './components/Header'
 import ChatPanel from './components/ChatPanel'
 import MusicPlayer from './components/MusicPlayer'
+import { useAudioPlayer } from './hooks/useAudioPlayer'
 import { API_BASE_URL } from './config'
 import './App.css'
 
 function App() {
   const [countries, setCountries] = useState([])
-  const [playlists, setPlaylists] = useState([]) // Custom playlists from AI requests
+  const [playlists, setPlaylists] = useState([])
   const [isConnected, setIsConnected] = useState(false)
   const [error, setError] = useState(null)
-  const [currentAudio, setCurrentAudio] = useState(null)
-  const [currentTrack, setCurrentTrack] = useState(null)
   const [trackFilter, setTrackFilter] = useState(null)
-  const [isAutoPlayMode, setIsAutoPlayMode] = useState(true) // Track if we're in auto-play mode
-  const [selectedPlaylist, setSelectedPlaylist] = useState(null) // Currently selected playlist
-  const [currentPlayingPlaylist, setCurrentPlayingPlaylist] = useState(null) // Playlist currently being played
-  const [currentPlaylistIndex, setCurrentPlaylistIndex] = useState(0) // Current song index in playlist
+  const [selectedPlaylist, setSelectedPlaylist] = useState(null)
+
+  // Use the singleton audio player
+  const {
+    isPlaying,
+    isUnlocked,
+    currentTrack,
+    play,
+    togglePlayPause,
+    stop,
+    seek,
+    skip,
+    unlock,
+    onTrackEnded,
+    getAudioElement
+  } = useAudioPlayer()
+
   const globeMapRef = useRef(null)
-  const isAutoPlayModeRef = useRef(true) // Ref for checking auto-play in event listeners
-  const currentPlayingPlaylistRef = useRef(null) // Ref for playlist in event listeners
-  const currentPlaylistIndexRef = useRef(0) // Ref for playlist index in event listeners
-  const audioUnlockedRef = useRef(false) // Track if audio has been unlocked
+  const countriesRef = useRef([])
+  const isAutoPlayModeRef = useRef(true)
+
+  // Refs to store latest function references (avoids stale closures)
+  const handlePlaySongRef = useRef(null)
+  const playRandomSongRef = useRef(null)
+
+  // Keep countriesRef in sync
+  useEffect(() => {
+    countriesRef.current = countries
+  }, [countries])
 
   // Unlock audio on first user interaction
   useEffect(() => {
-    const unlockAudio = async () => {
-      if (audioUnlockedRef.current) return
+    const handleInteraction = () => {
+      unlock()
+    }
 
-      try {
-        const silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA')
-        await silentAudio.play()
-        audioUnlockedRef.current = true
-        console.log('✅ Audio context unlocked on user interaction')
+    document.addEventListener('click', handleInteraction, { once: true })
+    document.addEventListener('keydown', handleInteraction, { once: true })
 
-        // Remove listener after unlock
-        document.removeEventListener('click', unlockAudio)
-        document.removeEventListener('keydown', unlockAudio)
-      } catch (err) {
-        console.log('⚠️ Audio unlock attempt (will retry on next interaction)')
+    return () => {
+      document.removeEventListener('click', handleInteraction)
+      document.removeEventListener('keydown', handleInteraction)
+    }
+  }, [unlock])
+
+  // Define handlePlaySong
+  const handlePlaySong = useCallback(async (countryCode, trackName, artistName, isAutoPlay = false, previewUrl = null, playlistContext = null, imageUrl = null) => {
+    console.log('[App] handlePlaySong:', countryCode, trackName, artistName, 'isAutoPlay:', isAutoPlay)
+
+    // If user manually plays, disable auto-play
+    if (!isAutoPlay) {
+      console.log('[App] Manual play - disabling auto-play')
+      isAutoPlayModeRef.current = false
+    }
+
+    let track = null
+    let country = null
+    let context = 'trending'
+
+    // Build track from provided URL or find in countries
+    if (previewUrl) {
+      track = {
+        name: trackName,
+        artist: artistName,
+        preview_url: previewUrl,
+        image_url: imageUrl
+      }
+      country = {
+        country_name: playlistContext ? 'AI Playlist' : 'Search',
+        country_code: countryCode,
+        flag: playlistContext ? '🎵' : '🔍'
+      }
+      context = playlistContext ? 'playlist' : 'search'
+    } else {
+      country = countriesRef.current.find(c => c.country_code === countryCode)
+      if (!country) {
+        console.log('[App] Country not found:', countryCode)
+        return
+      }
+
+      track = country.tracks.find(t =>
+        t.name.toLowerCase().includes(trackName.toLowerCase()) &&
+        t.artist.toLowerCase().includes(artistName.toLowerCase())
+      )
+
+      if (!track || !track.preview_url) {
+        console.log('[App] Track not found or no preview:', trackName)
+        return
       }
     }
 
-    document.addEventListener('click', unlockAudio)
-    document.addEventListener('keydown', unlockAudio)
+    // Build full track object with country info
+    const fullTrack = {
+      ...track,
+      country_code: country.country_code,
+      country_name: country.country_name,
+      flag: country.flag
+    }
 
-    return () => {
-      document.removeEventListener('click', unlockAudio)
-      document.removeEventListener('keydown', unlockAudio)
+    console.log('[App] Calling play() with track:', fullTrack.name)
+
+    // Play using singleton
+    const success = await play(fullTrack, {
+      context,
+      playlist: playlistContext?.playlist || null,
+      playlistIndex: playlistContext?.index || 0
+    })
+
+    console.log('[App] play() returned:', success)
+
+    // Select country on globe (skip for playlists/search)
+    if (countryCode !== 'SPOTIFY' && countryCode !== 'PLAYLIST') {
+      handleSelectCountry(countryCode)
+    }
+  }, [play])
+
+  // Define playRandomSong
+  const playRandomSong = useCallback(() => {
+    const currentCountries = countriesRef.current
+    console.log('[App] playRandomSong, countries:', currentCountries.length)
+
+    const countriesWithPreviews = currentCountries.filter(country =>
+      country.tracks.some(track => track.preview_url)
+    )
+
+    if (countriesWithPreviews.length === 0) {
+      console.log('[App] No countries with previews')
+      return
+    }
+
+    const randomCountry = countriesWithPreviews[Math.floor(Math.random() * countriesWithPreviews.length)]
+    const tracksWithPreviews = randomCountry.tracks.filter(track => track.preview_url)
+
+    if (tracksWithPreviews.length === 0) return
+
+    const randomTrack = tracksWithPreviews[Math.floor(Math.random() * tracksWithPreviews.length)]
+    console.log('[App] Playing random:', randomTrack.name, 'from', randomCountry.country_name)
+
+    // Use ref to get latest function
+    if (handlePlaySongRef.current) {
+      handlePlaySongRef.current(randomCountry.country_code, randomTrack.name, randomTrack.artist, true)
     }
   }, [])
 
+  // Keep refs updated with latest functions
   useEffect(() => {
-    // Fetch initial data
+    handlePlaySongRef.current = handlePlaySong
+  }, [handlePlaySong])
+
+  useEffect(() => {
+    playRandomSongRef.current = playRandomSong
+  }, [playRandomSong])
+
+  // Handle track ended - uses refs to avoid stale closures
+  useEffect(() => {
+    const handleEnded = ({ track, context, playlistInfo: pInfo }) => {
+      console.log('[App] Track ended:', track?.name, 'Context:', context)
+
+      // Priority 1: Continue playlist
+      if (pInfo && pInfo.playlist) {
+        const { playlist, index } = pInfo
+        const nextIndex = index + 1
+
+        console.log('[App] Playlist mode - index:', index, 'total:', playlist.tracks.length)
+
+        if (nextIndex < playlist.tracks.length) {
+          const nextTrack = playlist.tracks[nextIndex]
+          if (nextTrack.preview_url) {
+            console.log('[App] Playing next playlist track:', nextTrack.name)
+            setTimeout(() => {
+              if (handlePlaySongRef.current) {
+                handlePlaySongRef.current(
+                  'PLAYLIST',
+                  nextTrack.name,
+                  nextTrack.artist,
+                  false,
+                  nextTrack.preview_url,
+                  { playlist, index: nextIndex },
+                  nextTrack.image_url
+                )
+              }
+            }, 1000)
+            return
+          }
+        }
+        console.log('[App] Playlist finished')
+      }
+
+      // Priority 2: Auto-play random trending song
+      if (isAutoPlayModeRef.current && context !== 'playlist') {
+        console.log('[App] Auto-playing next random song...')
+        setTimeout(() => {
+          if (playRandomSongRef.current) {
+            playRandomSongRef.current()
+          }
+        }, 1000)
+      }
+    }
+
+    onTrackEnded(handleEnded)
+  }, [onTrackEnded])
+
+  // Fetch countries on mount
+  useEffect(() => {
     fetchCountries()
 
-    // Connect to SSE for real-time updates
     const eventSource = new EventSource(`${API_BASE_URL}/stream`)
 
     eventSource.onopen = () => {
@@ -74,43 +236,27 @@ function App() {
       }
     })
 
-    eventSource.onerror = (err) => {
-      console.error('SSE error:', err)
-      // Don't disconnect if we already have data
-      if (countries.length === 0) {
+    eventSource.onerror = () => {
+      if (countriesRef.current.length === 0) {
         setIsConnected(false)
       }
     }
 
-    return () => {
-      eventSource.close()
-    }
+    return () => eventSource.close()
   }, [])
 
-  // Auto-play random trending song on page load (after audio is unlocked)
+  // Auto-play on load (when unlocked and no track playing)
   useEffect(() => {
-    // Playlist mode: playlist handles its own sequential playback via 'ended' event
-    if (currentPlayingPlaylistRef.current) {
-      return
-    }
-
-    // Manual mode: user clicked a track, no auto-play
-    if (!isAutoPlayModeRef.current) {
-      return
-    }
-
-    if (countries.length > 0 && !currentTrack && audioUnlockedRef.current) {
+    if (countries.length > 0 && !currentTrack && isUnlocked && isAutoPlayModeRef.current) {
       const timer = setTimeout(() => {
-        // Verify conditions still valid (state may change during timeout)
-        if (!currentPlayingPlaylistRef.current && isAutoPlayModeRef.current) {
-          console.log('Auto-playing random song...')
-          playRandomSong()
+        if (!currentTrack && isAutoPlayModeRef.current && playRandomSongRef.current) {
+          console.log('[App] Auto-playing random song on load...')
+          playRandomSongRef.current()
         }
       }, 500)
-
       return () => clearTimeout(timer)
     }
-  }, [countries, currentTrack])
+  }, [countries.length, currentTrack, isUnlocked])
 
   const fetchCountries = async () => {
     try {
@@ -134,199 +280,21 @@ function App() {
     }
   }
 
-  const handlePlaySong = (countryCode, trackName, artistName, isAutoPlay = false, previewUrl = null, playlistContext = null, imageUrl = null) => {
-    console.log('handlePlaySong called:', countryCode, trackName, artistName, 'isAutoPlay:', isAutoPlay, 'previewUrl:', previewUrl, 'playlistContext:', playlistContext, 'imageUrl:', imageUrl)
+  const handlePlayPause = useCallback(() => {
+    togglePlayPause()
+  }, [togglePlayPause])
 
-    // SAFETY: If user manually plays any song, KILL auto-play forever
-    if (!isAutoPlay) {
-      console.log('🛑 MANUAL PLAY DETECTED - Disabling auto-play permanently for this session')
-      setIsAutoPlayMode(false)
-      isAutoPlayModeRef.current = false
-    }
+  const handleSeek = useCallback((time) => {
+    seek(time)
+  }, [seek])
 
-    // Track playlist playback context
-    if (playlistContext) {
-      console.log('📀 Playing from playlist:', playlistContext.playlist.name, 'Track index:', playlistContext.index)
-      setCurrentPlayingPlaylist(playlistContext.playlist)
-      setCurrentPlaylistIndex(playlistContext.index)
-      currentPlayingPlaylistRef.current = playlistContext.playlist
-      currentPlaylistIndexRef.current = playlistContext.index
-    } else {
-      // Not playing from playlist - clear playlist context
-      setCurrentPlayingPlaylist(null)
-      setCurrentPlaylistIndex(0)
-      currentPlayingPlaylistRef.current = null
-      currentPlaylistIndexRef.current = 0
-    }
-
-    let track = null
-    let country = null
-
-    // If previewUrl is provided (iTunes/Spotify search), use it directly
-    if (previewUrl) {
-      console.log('Using provided preview URL (iTunes/Spotify):', previewUrl)
-      track = {
-        name: trackName,
-        artist: artistName,
-        preview_url: previewUrl,
-        image_url: imageUrl // Include album art if provided
-      }
-      // Create a virtual country for playlist tracks
-      country = {
-        country_name: 'AI Playlist',
-        country_code: 'PLAYLIST',
-        flag: '🎵'
-      }
-    } else {
-      // Original logic: find track in country's trending charts
-      country = countries.find(c => c.country_code === countryCode)
-      if (!country) {
-        console.log('Country not found:', countryCode)
-        return
-      }
-
-      track = country.tracks.find(t =>
-        t.name.toLowerCase().includes(trackName.toLowerCase()) &&
-        t.artist.toLowerCase().includes(artistName.toLowerCase())
-      )
-
-      if (!track || !track.preview_url) {
-        console.log('Track not found or no preview available:', trackName, artistName)
-        return
-      }
-    }
-
-    console.log('Playing track:', track.name, 'Preview URL:', track.preview_url)
-
-    // Stop current audio if playing and remove its event listeners
-    if (currentAudio) {
-      currentAudio.pause()
-      currentAudio.src = '' // Clear source to stop loading
-      // Event listeners will be garbage collected
-    }
-
-    // Create and play new audio
-    const audio = new Audio(track.preview_url)
-
-    // Set state first
-    setCurrentAudio(audio)
-    setCurrentTrack({
-      ...track,
-      country_code: country.country_code,
-      country_name: country.country_name,
-      flag: country.flag
-    })
-
-    console.log('Attempting to play audio... Auto-play mode:', isAutoPlay)
-
-    // Then play - this ensures state is set before playback starts
-    audio.play()
-      .then(() => {
-        console.log('✅ Audio playback started successfully')
-      })
-      .catch(err => {
-        console.error('❌ Error playing audio:', err)
-        console.error('⚠️ Browser autoplay policy blocked audio. Click the play button to start.')
-      })
-
-    // Audio ended handler - check for playlist continuation or random auto-play
-    audio.addEventListener('ended', () => {
-      console.log('Audio ended.')
-      setCurrentAudio(null)
-      setCurrentTrack(null)
-
-      // Priority 1: Check if we're playing from a playlist
-      if (currentPlayingPlaylistRef.current) {
-        const playlist = currentPlayingPlaylistRef.current
-        const currentIndex = currentPlaylistIndexRef.current
-        const nextIndex = currentIndex + 1
-
-        console.log('📀 Playlist mode - Current index:', currentIndex, 'Total tracks:', playlist.tracks.length)
-
-        if (nextIndex < playlist.tracks.length) {
-          const nextTrack = playlist.tracks[nextIndex]
-          if (nextTrack.preview_url) {
-            console.log('📀 Playing next track from playlist:', nextTrack.name)
-            setTimeout(() => {
-              // Play next track with playlist context
-              handlePlaySong(
-                'PLAYLIST',
-                nextTrack.name,
-                nextTrack.artist,
-                false, // Not random auto-play
-                nextTrack.preview_url,
-                { playlist, index: nextIndex }, // Continue playlist context
-                nextTrack.image_url // Pass album art for music player display
-              )
-            }, 1000)
-          } else {
-            console.log('📀 Next track has no preview, skipping to next...')
-            // Skip to next track
-            currentPlaylistIndexRef.current = nextIndex
-            setTimeout(() => {
-              const skipEvent = new Event('ended')
-              audio.dispatchEvent(skipEvent)
-            }, 100)
-          }
-        } else {
-          console.log('📀 Playlist finished - stopping playback')
-          // Playlist complete - clear context
-          setCurrentPlayingPlaylist(null)
-          setCurrentPlaylistIndex(0)
-          currentPlayingPlaylistRef.current = null
-          currentPlaylistIndexRef.current = 0
-        }
-      }
-      // Priority 2: Check if random auto-play is enabled (trending songs)
-      else if (isAutoPlayModeRef.current) {
-        console.log('🔀 Auto-playing next random trending song...')
-        setTimeout(() => {
-          playRandomSong()
-        }, 1000)
-      } else {
-        console.log('⏹️ Playback stopped - no auto-play')
-      }
-    })
-
-    // Also select the country on the globe (skip for Spotify)
-    if (countryCode !== 'SPOTIFY') {
-      handleSelectCountry(countryCode)
-    }
-  }
-
-  const handlePlayPause = () => {
-    if (!currentAudio) return
-
-    if (currentAudio.paused) {
-      currentAudio.play()
-        .then(() => {
-          console.log('✅ Playback resumed successfully')
-        })
-        .catch(err => {
-          console.error('❌ Error resuming playback:', err)
-        })
-    } else {
-      currentAudio.pause()
-    }
-  }
-
-  const handleSeek = (time) => {
-    if (!currentAudio) return
-    currentAudio.currentTime = time
-  }
-
-  const handleSkip = (direction) => {
-    if (!currentAudio) return
-    const newTime = direction === 'forward'
-      ? Math.min(currentAudio.currentTime + 10, currentAudio.duration)
-      : Math.max(currentAudio.currentTime - 10, 0)
-    currentAudio.currentTime = newTime
-  }
+  const handleSkip = useCallback((direction) => {
+    skip(direction === 'forward' ? 10 : -10)
+  }, [skip])
 
   const handleSearchAndPlay = (searchQuery) => {
     const query = searchQuery.toLowerCase()
 
-    // Find all countries with matching tracks
     for (const country of countries) {
       const matchingTracks = country.tracks.filter(track =>
         track.name.toLowerCase().includes(query) ||
@@ -334,65 +302,22 @@ function App() {
       )
 
       if (matchingTracks.length > 0) {
-        // Found first country with matching songs
-        // Set the filter
         setTrackFilter(query)
-
-        // Select the country
         handleSelectCountry(country.country_code)
 
-        // Play the first matching song with preview URL
         const firstTrackWithPreview = matchingTracks.find(t => t.preview_url)
         if (firstTrackWithPreview) {
           setTimeout(() => {
             handlePlaySong(country.country_code, firstTrackWithPreview.name, firstTrackWithPreview.artist)
           }, 500)
         }
-
         break
       }
     }
   }
 
-  const playRandomSong = () => {
-    console.log('playRandomSong called, countries:', countries.length)
-
-    // Get countries with tracks that have preview URLs
-    const countriesWithPreviews = countries.filter(country =>
-      country.tracks.some(track => track.preview_url)
-    )
-
-    console.log('Countries with previews:', countriesWithPreviews.length)
-
-    if (countriesWithPreviews.length === 0) {
-      console.log('No countries with preview URLs found')
-      return
-    }
-
-    // Pick random country
-    const randomCountry = countriesWithPreviews[Math.floor(Math.random() * countriesWithPreviews.length)]
-
-    // Get tracks with preview URLs from that country
-    const tracksWithPreviews = randomCountry.tracks.filter(track => track.preview_url)
-
-    console.log('Tracks with previews:', tracksWithPreviews.length)
-
-    if (tracksWithPreviews.length === 0) {
-      console.log('No tracks with preview URLs in selected country')
-      return
-    }
-
-    // Pick random track
-    const randomTrack = tracksWithPreviews[Math.floor(Math.random() * tracksWithPreviews.length)]
-
-    console.log('Playing random track:', randomTrack.name, 'from', randomCountry.country_name)
-
-    // Play it in auto-play mode
-    handlePlaySong(randomCountry.country_code, randomTrack.name, randomTrack.artist, true)
-  }
-
   const handleAddPlaylist = (playlistName, tracks) => {
-    console.log('Adding playlist:', playlistName, 'with', tracks.length, 'tracks')
+    console.log('[App] Adding playlist:', playlistName, 'with', tracks.length, 'tracks')
 
     const newPlaylist = {
       id: `playlist_${Date.now()}`,
@@ -404,50 +329,30 @@ function App() {
     setPlaylists(prev => [...prev, newPlaylist])
     setSelectedPlaylist(newPlaylist)
 
-    // Don't auto-play here - ChatPanel.jsx handles auto-play to avoid duplicate playback
-
     return newPlaylist
   }
 
   const handleSelectPlaylist = (playlist) => {
-    console.log('Selecting playlist:', playlist ? playlist.name : 'null')
+    console.log('[App] Selecting playlist:', playlist?.name || 'null')
     setSelectedPlaylist(playlist)
 
-    // Stop current audio when switching to/from a playlist
-    if (currentAudio) {
-      console.log('Stopping current audio when selecting playlist')
-      currentAudio.pause()
-      currentAudio.src = ''
-      setCurrentAudio(null)
-      setCurrentTrack(null)
-      setCurrentPlayingPlaylist(null)
-      setCurrentPlaylistIndex(0)
-      currentPlayingPlaylistRef.current = null
-      currentPlaylistIndexRef.current = 0
-    }
-
-    // Clear any selected country when viewing a playlist
-    if (globeMapRef.current) {
-      // Don't call selectCountry, just let the playlist panel show
-    }
+    // Stop current audio when switching playlists
+    stop()
   }
 
   const handleRemovePlaylist = (playlistId) => {
-    console.log('Removing playlist:', playlistId)
+    console.log('[App] Removing playlist:', playlistId)
     setPlaylists(prev => prev.filter(p => p.id !== playlistId))
-    if (selectedPlaylist && selectedPlaylist.id === playlistId) {
+    if (selectedPlaylist?.id === playlistId) {
       setSelectedPlaylist(null)
     }
   }
 
   const handleClearAll = () => {
-    console.log('Clearing all playlists for demo')
+    console.log('[App] Clearing all playlists')
     setPlaylists([])
     setSelectedPlaylist(null)
-    setCurrentPlayingPlaylist(null)
-    setCurrentPlaylistIndex(0)
-    currentPlayingPlaylistRef.current = null
-    currentPlaylistIndexRef.current = 0
+    stop()
   }
 
   return (
@@ -480,7 +385,7 @@ function App() {
       />
       <MusicPlayer
         currentTrack={currentTrack}
-        currentAudio={currentAudio}
+        currentAudio={getAudioElement()}
         onPlayPause={handlePlayPause}
         onSeek={handleSeek}
         onSkip={handleSkip}

@@ -215,6 +215,8 @@ Try asking for a different song, or check out what's trending in the countries o
           external_url: track.external_url
         }))
 
+        console.log('[ChatPanel] Formatted tracks:', formattedTracks.length, 'with preview:', formattedTracks.filter(t => t.preview_url).length)
+
         // Add playlist to state via parent callback and get the created playlist object
         let createdPlaylist = null
         if (onAddPlaylist) {
@@ -233,8 +235,15 @@ Try asking for a different song, or check out what's trending in the countries o
         // IMMEDIATELY play the first track with preview URL for better UX
         // BUT: Skip auto-play during demo mode to prevent multiple songs playing simultaneously
         const firstTrackWithPreview = formattedTracks.find(track => track.preview_url)
+        console.log('[ChatPanel] Auto-play check:', {
+          firstTrack: firstTrackWithPreview?.name,
+          hasPreviewUrl: !!firstTrackWithPreview?.preview_url,
+          hasOnPlaySong: !!onPlaySong,
+          hasCreatedPlaylist: !!createdPlaylist,
+          demoModeDisabled: disableAutoPlayRef.current
+        })
         if (firstTrackWithPreview && onPlaySong && createdPlaylist && !disableAutoPlayRef.current) {
-          console.log('[ChatPanel] Auto-playing first track from playlist:', firstTrackWithPreview.name)
+          console.log('[ChatPanel] ✅ Auto-playing first track from playlist:', firstTrackWithPreview.name)
 
           // Add status message: Starting playback
           setMessages(prev => [...prev, {
@@ -302,17 +311,7 @@ Try asking for a different song, or check out what's trending in the countries o
       if (inputRef.current) {
         inputRef.current.focus()
       }
-      // Unlock audio on chat open (user gesture)
-      const unlockAudio = async () => {
-        try {
-          const silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA')
-          await silentAudio.play()
-          console.log('✅ Audio unlocked on chat open')
-        } catch (err) {
-          console.log('⚠️ Audio unlock failed (normal on first load)')
-        }
-      }
-      unlockAudio()
+      // Audio unlock handled by AudioManager singleton - no duplicate unlock needed
     }
   }, [isOpen])
 
@@ -326,16 +325,7 @@ Try asking for a different song, or check out what's trending in the countries o
     const scenario = demoScenariosData.scenarios.find(s => s.id === selectedDemo)
     if (!scenario) return
 
-    // CRITICAL: Initialize audio context on user click to unlock autoplay
-    // Create a silent audio and play it immediately on this user gesture
-    try {
-      const silentAudio = new Audio('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA')
-      await silentAudio.play()
-      console.log('✅ Audio context unlocked for demo')
-    } catch (err) {
-      console.warn('⚠️ Could not unlock audio context:', err)
-    }
-
+    // Audio unlock handled by AudioManager singleton - triggered by this click event
     stopDemoRef.current = false
     disableAutoPlayRef.current = true // CRITICAL: Disable auto-play during demo
     setIsPlayingDemo(true)
@@ -470,11 +460,12 @@ Try asking for a different song, or check out what's trending in the countries o
     setIsLoading(false)
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    if (!input.trim() || isLoading) return
+  const handleSubmit = async (e, directMessage = null) => {
+    if (e) e.preventDefault()
 
-    const userMessage = input.trim()
+    const userMessage = directMessage || input.trim()
+    if (!userMessage || isLoading) return
+
     setInput('')
     setIsLoading(true)
 
@@ -616,10 +607,12 @@ Try asking for a different song, or check out what's trending in the countries o
   ]
 
   const handleExampleClick = (question) => {
+    // Auto-submit the question instead of just filling the input
     setInput(question)
-    if (inputRef.current) {
-      inputRef.current.focus()
-    }
+    // Submit directly by calling handleSubmit with the question
+    setTimeout(() => {
+      handleSubmit(null, question)
+    }, 0)
   }
 
   return (

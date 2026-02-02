@@ -8,6 +8,12 @@ class ITunesService:
     def __init__(self):
         self.api_base = "https://itunes.apple.com"
         self.search_base = "https://itunes.apple.com/search"
+        # Use browser-like headers to avoid rate limiting
+        self.headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'application/json',
+            'Accept-Language': 'en-US,en;q=0.9',
+        }
 
     async def get_preview_url(self, track_name: str, artist_name: str, country_code: str) -> str:
         """Get preview URL for a track using iTunes Search API"""
@@ -20,7 +26,7 @@ class ITunesService:
         }
 
         try:
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(headers=self.headers) as client:
                 response = await client.get(self.search_base, params=params, timeout=10.0)
                 if response.status_code == 200:
                     data = response.json()
@@ -34,7 +40,7 @@ class ITunesService:
         return None
 
     async def search_tracks(self, query: str, limit: int = 20) -> List[Track]:
-        """Search for tracks using iTunes Search API with retry logic
+        """Search for tracks using iTunes Search API with Deezer fallback
 
         Args:
             query: Search query (artist name, song name, etc.)
@@ -43,56 +49,96 @@ class ITunesService:
         Returns:
             List of Track objects with preview URLs
         """
+        # Try iTunes first
+        tracks = await self._search_itunes(query, limit)
+        if tracks:
+            return tracks
+
+        # Fallback to Deezer if iTunes fails (more lenient rate limiting)
+        print("iTunes search failed, falling back to Deezer...")
+        return await self._search_deezer(query, limit)
+
+    async def _search_itunes(self, query: str, limit: int) -> List[Track]:
+        """Search using iTunes API"""
         params = {
             'term': query,
             'media': 'music',
             'entity': 'song',
             'limit': limit,
-            'country': 'US'  # Use US store for widest catalog
+            'country': 'US'
         }
 
-        # Retry with exponential backoff for rate limiting
-        for attempt in range(3):
-            try:
-                async with httpx.AsyncClient() as client:
-                    response = await client.get(self.search_base, params=params, timeout=15.0)
+        try:
+            async with httpx.AsyncClient(headers=self.headers) as client:
+                response = await client.get(self.search_base, params=params, timeout=15.0)
 
-                    if response.status_code == 200:
-                        data = response.json()
-                        results = data.get('results', [])
+                if response.status_code == 200:
+                    data = response.json()
+                    results = data.get('results', [])
 
-                        tracks = []
-                        for result in results:
-                            track_name = result.get('trackName', 'Unknown')
-                            artist_name = result.get('artistName', 'Unknown Artist')
-                            preview_url = result.get('previewUrl')
-                            image_url = result.get('artworkUrl100')
-                            external_url = result.get('trackViewUrl')
+                    tracks = []
+                    for result in results:
+                        track_name = result.get('trackName', 'Unknown')
+                        artist_name = result.get('artistName', 'Unknown Artist')
+                        preview_url = result.get('previewUrl')
+                        image_url = result.get('artworkUrl100')
+                        external_url = result.get('trackViewUrl')
 
-                            tracks.append(Track(
-                                name=track_name,
-                                artist=artist_name,
-                                preview_url=preview_url,
-                                image_url=image_url,
-                                external_url=external_url
-                            ))
+                        tracks.append(Track(
+                            name=track_name,
+                            artist=artist_name,
+                            preview_url=preview_url,
+                            image_url=image_url,
+                            external_url=external_url
+                        ))
 
-                        return tracks
+                    return tracks
 
-                    elif response.status_code in (403, 429):
-                        # Rate limited - wait and retry
-                        wait_time = (attempt + 1) * 3  # 3s, 6s, 9s
-                        print(f"iTunes search rate limited, waiting {wait_time}s...")
-                        await asyncio.sleep(wait_time)
-                        continue
-                    else:
-                        print(f"iTunes search error: {response.status_code}")
-                        return []
+                elif response.status_code in (403, 429):
+                    print(f"iTunes search rate limited")
+                    return []
+                else:
+                    print(f"iTunes search error: {response.status_code}")
+                    return []
 
-            except Exception as e:
-                print(f"iTunes search error: {type(e).__name__}: {str(e)}")
-                if attempt < 2:
-                    await asyncio.sleep(2)
+        except Exception as e:
+            print(f"iTunes search error: {type(e).__name__}: {str(e)}")
+            return []
+
+    async def _search_deezer(self, query: str, limit: int) -> List[Track]:
+        """Search using Deezer API (free, no auth required)"""
+        try:
+            async with httpx.AsyncClient(headers=self.headers) as client:
+                response = await client.get(
+                    "https://api.deezer.com/search",
+                    params={'q': query, 'limit': limit},
+                    timeout=15.0
+                )
+
+                if response.status_code == 200:
+                    data = response.json()
+                    results = data.get('data', [])
+
+                    tracks = []
+                    for result in results:
+                        track_name = result.get('title', 'Unknown')
+                        artist_name = result.get('artist', {}).get('name', 'Unknown Artist')
+                        preview_url = result.get('preview')  # 30-second preview
+                        image_url = result.get('album', {}).get('cover_medium')
+                        external_url = result.get('link')
+
+                        tracks.append(Track(
+                            name=track_name,
+                            artist=artist_name,
+                            preview_url=preview_url,
+                            image_url=image_url,
+                            external_url=external_url
+                        ))
+
+                    return tracks
+
+        except Exception as e:
+            print(f"Deezer search error: {type(e).__name__}: {str(e)}")
 
         return []
 
@@ -105,7 +151,7 @@ class ITunesService:
             # Construct iTunes RSS feed URL
             url = f"{self.api_base}/{country_code_lower}/rss/topsongs/limit=10/json"
 
-            async with httpx.AsyncClient() as client:
+            async with httpx.AsyncClient(headers=self.headers) as client:
                 response = await client.get(url, timeout=10.0)
 
                 if response.status_code != 200:
